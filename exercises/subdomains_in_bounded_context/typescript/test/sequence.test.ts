@@ -1,5 +1,7 @@
 import { describe, it, expect } from "bun:test";
 
+// You won't need to use these until the final exercise
+
 describe("Application", () => {
   describe("when an application tests 80% and has an interview score of 9", () => {
     // Example test that should have 80% score: 2 poor, 0 fine, 8 good, 0 great
