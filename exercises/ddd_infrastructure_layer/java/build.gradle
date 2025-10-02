@@ -1,0 +1,63 @@
+import org.gradle.api.logging.configuration.ConsoleOutput
+
+plugins {
+    id 'java'
+    id 'jvm-test-suite'
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.json:json:20250517'
+    implementation 'com.google.inject:guice:7.0.0'
+}
+
+testing {
+    suites {
+        test {
+            useJUnitJupiter('5.9.0')
+        }
+    }
+}
+
+tasks.named('test') {
+    useJUnitPlatform {
+        if (project.hasProperty('infrastructure')) {
+            includeTags 'infrastructure'
+        } else {
+            excludeTags 'infrastructure'
+        }
+    }
+
+    testLogging {
+        events "passed", "skipped", "failed"
+        exceptionFormat = 'full'
+        showStandardStreams = true
+        showExceptions = true
+        showCauses = true
+        showStackTraces = true
+
+        afterSuite { desc, result ->
+            if (!desc.parent) { // will match the outermost suite
+                def output = "Results: ${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} passed, ${result.failedTestCount} failed, ${result.skippedTestCount} skipped)"
+                def startItem = '|  ', endItem = '  |'
+                def repeatLength = startItem.length() + output.length() + endItem.length()
+                println('\n' + ('-' * repeatLength) + '\n' + startItem + output + endItem + '\n' + ('-' * repeatLength))
+            }
+        }
+
+    }
+}
+
+tasks.register('runMainPlain', JavaExec) {
+    group = 'application'
+    description = 'Compiles the project and runs com.example.admissions.Main.'
+    dependsOn tasks.named('classes')
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass.set('Main')
+    standardInput = System.in
+    standardOutput = System.out
+    errorOutput = System.err
+}
