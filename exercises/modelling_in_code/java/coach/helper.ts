@@ -1,5 +1,6 @@
 #!/usr/bin/env bun
 
+import { $ } from "bun";
 import Cryptr from "cryptr";
 import path from "node:path";
 
@@ -82,6 +83,7 @@ if (command === "init") {
     await Bun.write(absolutePath, contents);
     console.log(`Wrote ${absolutePath}`);
   }
+  await $`chown -R 1001 ${thisDir}/..`;
 
   console.log(`Unpacked ${pack.length} file(s) from pack '${packName}'`);
 } else if (command === "show") {
