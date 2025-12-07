@@ -1,0 +1,10 @@
+{
+    "redhat.telemetry.enabled": false,
+    "java.import.projectSelection": "automatic",
+    "java.import.gradle.version": "8.13",
+    "java.import.exclusions": [
+        "**",
+        "!**/EXERCISES_DIR/**"
+    ],
+    "java.compile.nullAnalysis.mode": "automatic"
+}
