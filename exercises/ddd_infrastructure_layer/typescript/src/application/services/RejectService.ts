@@ -1,5 +1,6 @@
 import { ApplicationId } from '../../domain/application/ApplicationId';
 import type { ApplicationRepository } from '../../domain/application/ApplicationRepository';
+import type { EventBroker } from '../../infrastructure/EventBroker';
 
 export interface RejectCommand {
   applicationId: string; // UUIDv4
@@ -7,9 +8,11 @@ export interface RejectCommand {
 
 export class RejectService {
   private repo: ApplicationRepository;
+  private eventBroker: EventBroker;
 
-  constructor(repo: ApplicationRepository) {
+  constructor(repo: ApplicationRepository, eventBroker: EventBroker) {
     this.repo = repo;
+    this.eventBroker = eventBroker;
   }
 
   async execute(cmd: RejectCommand) {
@@ -26,5 +29,7 @@ export class RejectService {
     }
 
     await this.repo.save(application);
+
+    await this.eventBroker.publishAll(application.pullEvents());
   }
 }

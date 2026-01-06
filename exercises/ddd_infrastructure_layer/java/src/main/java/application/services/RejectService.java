@@ -6,13 +6,16 @@ import com.google.inject.Inject;
 
 import domain.application.ApplicationId;
 import domain.application.ApplicationRepository;
+import infrastructure.EventBroker;
 
 public final class RejectService {
     private final ApplicationRepository repository;
+    private final EventBroker eventBroker;
 
     @Inject
-    public RejectService(ApplicationRepository repository) {
+    public RejectService(ApplicationRepository repository, EventBroker eventBroker) {
         this.repository = repository;
+        this.eventBroker = eventBroker;
     }
 
     public void execute(RejectCommand command) throws Exception {
@@ -29,6 +32,8 @@ public final class RejectService {
         }
 
         repository.save(application);
+
+        eventBroker.publishAll(application.pullEvents());
     }
 
     public record RejectCommand(UUID applicationId) {

@@ -1,5 +1,14 @@
 package infrastructure;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.time.ZonedDateTime;
+import java.util.Objects;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import domain.application.Application;
 import domain.application.ApplicationId;
 import domain.application.ApplicationReceivedDateTime;
@@ -9,23 +18,7 @@ import domain.application.EmailAddress;
 import domain.application.FullName;
 import domain.application.MotivationLetter;
 import domain.application.PhoneNumber;
-import domain.application.Application.ApplicationFields;
-import domain.application.stages.ApplicationStage;
-import domain.application.stages.ApplicationStageOne;
-import domain.application.stages.ApplicationStageThree;
-import domain.application.stages.ApplicationStageTwo;
-import domain.application.stages.ApplicationStageZero;
 import domain.application.stages.ApplicationStages;
-
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.time.ZonedDateTime;
-import java.util.Objects;
-import java.util.UUID;
-
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 public final class JSONFileApplicationRepository implements ApplicationRepository {
     private final Path filePath;
@@ -34,25 +27,94 @@ public final class JSONFileApplicationRepository implements ApplicationRepositor
         this.filePath = filePath;
     }
 
-     @Override
+    @Override
     public Application getById(ApplicationId id) throws IOException {
-        JSONArray store = loadStore();
-        // ... @TODO ...
-        // 1. Extract the relevant record from the store
-        // 2. Reconstitute a valid Application from it
-        //    (You will likely want to add a static `reconstitute` method to the Application class)
-        return null;
+        Objects.requireNonNull(id, "id");
+
+        JSONObject record = this.findRecordById(id);
+
+        if (record == null) {
+            return null;
+        }
+
+        var stage = ApplicationStages.fromName(record.getString("stage"));
+        var status = ApplicationStatus.valueOf(record.getString("status"));
+        var receivedDateTime = new ApplicationReceivedDateTime(ZonedDateTime.parse(record.getString("receivedDateTime")));
+
+        FullName fullName = null;
+        if (!record.isNull("fullName")) {
+            fullName = new FullName(record.getString("fullName"));
+        }
+
+        PhoneNumber phoneNumber = null;
+        if (!record.isNull("phoneNumber")) {
+            phoneNumber = new PhoneNumber(record.getString("phoneNumber"));
+        }
+
+        EmailAddress emailAddress = null;
+        if (!record.isNull("emailAddress")) {
+            emailAddress = new EmailAddress(record.getString("emailAddress"));
+        }
+
+        MotivationLetter motivationLetter = null;
+        if (!record.isNull("motivationLetter")) {
+            motivationLetter = new MotivationLetter(record.getString("motivationLetter"));
+        }
+
+        return new Application(
+            id,
+            stage,
+            status,
+            receivedDateTime,
+            fullName,
+            emailAddress,
+            phoneNumber,
+            motivationLetter
+        );
     }
 
     @Override
     public void save(Application application) throws IOException {
         JSONArray store = loadStore();
-        // ... @TODO ...
-        // 1. Convert the Application to a suitable record.
-        // 2. Determine if an application with the same ID already exists in the store.
-        // 3. If it does, update that record with the new details.
-        // 4. If it doesn't, add a new record to the store.
-        // 5. Save the updated store back to the file.
+        JSONObject record = new JSONObject();
+
+        record.put("id", application.getId().getValue().toString());
+        record.put("stage", application.getStage().getName());
+        record.put("status", application.getStatus().toString());
+        record.put("receivedDateTime", application.getReceivedDateTime().getValue().toString());
+
+        record.put("fullName", JSONObject.NULL);
+        if (application.getFullName() != null) {
+            record.put("fullName", application.getFullName().getValue());
+        }
+
+        record.put("phoneNumber", JSONObject.NULL);
+        if (application.getPhoneNumber() != null) {
+            record.put("phoneNumber", application.getPhoneNumber().getValue());
+        }
+
+        record.put("emailAddress", JSONObject.NULL);
+        if (application.getEmailAddress() != null) {
+            record.put("emailAddress", application.getEmailAddress().getValue());
+        }
+
+        record.put("motivationLetter", JSONObject.NULL);
+        if (application.getMotivationLetter() != null) {
+            record.put("motivationLetter", application.getMotivationLetter().getValue());
+        }
+
+        boolean updated = false;
+        for (int i = 0; i < store.length(); i++) {
+            JSONObject existing = store.getJSONObject(i);
+            if (application.getId().getValue().toString().equals(existing.getString("id"))) {
+                store.put(i, record);
+                updated = true;
+                break;
+            }
+        }
+        if (!updated) {
+            store.put(record);
+        }
         saveStore(store);
     }
 
@@ -69,5 +131,16 @@ public final class JSONFileApplicationRepository implements ApplicationRepositor
 
         String json = Files.readString(filePath);
         return new JSONArray(json);
+    }
+
+    private JSONObject findRecordById(ApplicationId id) throws IOException {
+        JSONArray store = loadStore();
+        for (int i = 0; i < store.length(); i++) {
+            JSONObject record = store.getJSONObject(i);
+            if (id.getValue().toString().equals(record.getString("id"))) {
+                return record;
+            }
+        }
+        return null;
     }
 }

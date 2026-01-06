@@ -7,6 +7,7 @@ import java.util.UUID;
 
 import com.google.inject.Inject;
 
+import application.handlers.EmailOnApplicationRejected;
 import application.services.ApproveInitialApplicationService;
 import application.services.ApproveInitialApplicationService.ApproveInitialApplicationCommand;
 import application.services.FillOutBasicDetailsService;
@@ -19,8 +20,10 @@ import application.services.RejectService;
 import application.services.RejectService.RejectCommand;
 import application.services.SubmitMotivationLetterService;
 import application.services.SubmitMotivationLetterService.SubmitMotivationLetterCommand;
+import domain.application.ApplicationRejectedEvent;
 import domain.application.ApplicationStatus;
 import domain.application.stages.ApplicationStages;
+import infrastructure.EventBroker;
 
 public final class CLI {
     private final FillOutBasicDetailsService fillOutBasicDetailsService;
@@ -35,12 +38,17 @@ public final class CLI {
                GetDetailsService getDetailsService,
                SubmitMotivationLetterService submitMotivationLetterService,
                ApproveInitialApplicationService approveInitialApplicationService,
-               RejectService rejectApplicationService) {
+               RejectService rejectApplicationService,
+               EventBroker eventBroker,
+               EmailOnApplicationRejected emailOnApplicationRejected
+            ) {
         this.fillOutBasicDetailsService = fillOutBasicDetailsService;
         this.getDetailsService = getDetailsService;
         this.submitMotivationLetterService = submitMotivationLetterService;
         this.approveInitialApplicationService = approveInitialApplicationService;
         this.rejectApplicationService = rejectApplicationService;
+
+        eventBroker.subscribe(ApplicationRejectedEvent.class, emailOnApplicationRejected);
     }
 
     public void run() {

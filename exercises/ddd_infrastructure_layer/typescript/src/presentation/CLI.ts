@@ -1,33 +1,45 @@
+import { EmailOnApplicationRejected } from "../application/handlers/EmailOnApplicationRejected";
 import { ApproveInitialApplicationService, type ApproveInitialApplicationCommand } from "../application/services/ApproveInitialApplicationService";
 import { FillOutBasicDetailsService } from "../application/services/FillOutBasicDetailsService";
 import { GetDetailsService } from "../application/services/GetDetailsService";
 import { RejectService } from "../application/services/RejectService";
 import { SubmitMotivationLetterService } from "../application/services/SubmitMotivationLetterService";
+import { ApplicationRejectedEvent } from "../domain/application/ApplicationRejectedEvent";
 import type { ApplicationRepository } from "../domain/application/ApplicationRepository";
 import { ApplicationStage } from "../domain/application/ApplicationStage";
-import { InMemoryApplicationRepository } from "../infrastructure/InMemoryApplicationRepository";
+import type { EventBroker } from "../infrastructure/EventBroker";
+import { FileSavingEmailService } from "../infrastructure/FileSavingEmailService";
+import { InMemoryEventBroker } from "../infrastructure/InMemoryEventBroker";
 import { JSONFileApplicationRepository } from "../infrastructure/JSONFileApplicationRepository";
 
 export class CLI {
+  private eventBroker: EventBroker;
+  private emailService: FileSavingEmailService;
   private applicationRepo: ApplicationRepository;
   private fillOutBasicDetailsService: FillOutBasicDetailsService;
   private submitMotivationLetterService: SubmitMotivationLetterService;
   private getDetailsService: GetDetailsService;
   private approveInitialApplicationService: ApproveInitialApplicationService;
-  private rejectApplicationService: RejectService;
+  private rejectService: RejectService;
 
   constructor() {
     // A dependency injection container would typically handle this composition
 
     // Set up infrastructure
     this.applicationRepo = new JSONFileApplicationRepository("./data/applications.json");
+    this.eventBroker = new InMemoryEventBroker();
+    this.emailService = new FileSavingEmailService('data/emails');
 
     // Set up application services
     this.fillOutBasicDetailsService = new FillOutBasicDetailsService(this.applicationRepo);
     this.getDetailsService = new GetDetailsService(this.applicationRepo);
     this.submitMotivationLetterService = new SubmitMotivationLetterService(this.applicationRepo);
     this.approveInitialApplicationService = new ApproveInitialApplicationService(this.applicationRepo);
-    this.rejectApplicationService = new RejectService(this.applicationRepo);
+    this.rejectService = new RejectService(this.applicationRepo, this.eventBroker);
+
+    // Set up event handlers
+    const emailOnApplicationRejected = new EmailOnApplicationRejected(this.applicationRepo, this.emailService);
+    this.eventBroker.subscribe(ApplicationRejectedEvent, emailOnApplicationRejected);
   }
 
   async run() {
@@ -91,7 +103,7 @@ export class CLI {
         await this.approveInitialApplicationService.execute({ applicationId });
         console.log("Application progressed to stage three.");
       } else if (accept.toLowerCase() === "reject") {
-        await this.rejectApplicationService.execute({ applicationId });
+        await this.rejectService.execute({ applicationId });
         console.log("Application rejected.");
       } else {
         console.log("No action taken.");

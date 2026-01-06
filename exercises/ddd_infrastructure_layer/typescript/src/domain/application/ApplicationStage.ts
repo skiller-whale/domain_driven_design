@@ -1,25 +1,22 @@
-class ApplicationStageThree {
-  static readonly name = "Stage Three";
-
-  static isValidForStage(applicationFields: Record<string, any>): boolean {
-    return ApplicationStageTwo.isValidForStage(applicationFields);
-  }
+export interface ApplicationStage {
+  readonly name: string;
+  isValidForStage(applicationFields: Record<string, any>): boolean;
 }
 
-class ApplicationStageTwo {
-  static readonly name = "Stage Two";
+const ApplicationStageZero: ApplicationStage = {
+  name: "Stage Zero",
 
-  static isValidForStage(applicationFields: Record<string, any>): boolean {
+  isValidForStage(applicationFields: Record<string, any>): boolean {
     return !!(
-      ApplicationStageOne.isValidForStage(applicationFields) &&
-      applicationFields.motivationLetter);
+      applicationFields.id &&
+      applicationFields.receivedDateTime);
   }
 }
 
-class ApplicationStageOne {
-  static readonly name = "Stage One";
+const ApplicationStageOne: ApplicationStage = {
+  name: "Stage One",
 
-  static isValidForStage(applicationFields: Record<string, any>): boolean {
+  isValidForStage(applicationFields: Record<string, any>): boolean {
     return !!(
       ApplicationStageZero.isValidForStage(applicationFields) &&
       applicationFields.fullName &&
@@ -28,24 +25,34 @@ class ApplicationStageOne {
   }
 }
 
-class ApplicationStageZero {
-  static readonly name = "Stage Zero";
+const ApplicationStageTwo: ApplicationStage = {
+  name: "Stage Two",
 
-  static isValidForStage(applicationFields: Record<string, any>): boolean {
+  isValidForStage(applicationFields: Record<string, any>): boolean {
     return !!(
-      applicationFields.id &&
-      applicationFields.receivedDateTime);
+      ApplicationStageOne.isValidForStage(applicationFields) &&
+      applicationFields.motivationLetter);
   }
 }
 
-export interface ApplicationStage {
-  readonly name: string;
-  isValidForStage(applicationFields: Record<string, any>): boolean;
+const ApplicationStageThree: ApplicationStage = {
+  name: "Stage Three",
+
+  isValidForStage(applicationFields: Record<string, any>): boolean {
+    return ApplicationStageTwo.isValidForStage(applicationFields);
+  }
 }
 
-export class ApplicationStage {
-  static Zero: ApplicationStage = ApplicationStageZero;
-  static One: ApplicationStage = ApplicationStageOne;
-  static Two: ApplicationStage = ApplicationStageTwo;
-  static Three: ApplicationStage = ApplicationStageThree;
+export const ApplicationStage = {
+  Zero: ApplicationStageZero,
+  One: ApplicationStageOne,
+  Two: ApplicationStageTwo,
+  Three: ApplicationStageThree,
 }
+
+export const ApplicationStages: ApplicationStage[] = [
+  ApplicationStage.Zero,
+  ApplicationStage.One,
+  ApplicationStage.Two,
+  ApplicationStage.Three,
+];
