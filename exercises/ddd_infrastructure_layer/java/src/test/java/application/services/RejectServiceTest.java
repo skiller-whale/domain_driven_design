@@ -11,6 +11,7 @@ import application.services.RejectService.RejectCommand;
 import domain.application.ApplicationStatus;
 import helpers.ApplicationFixtures;
 import helpers.RecordingApplicationRepository;
+import infrastructure.InMemoryEventBroker;
 
 public class RejectServiceTest {
     private static final UUID APPLICATION_ID = UUID.fromString("55555555-5555-5555-5555-555555555555");
@@ -18,7 +19,8 @@ public class RejectServiceTest {
     @Test
     void testThrowsWhenNoApplicationCanBeFound() {
         var repo = new RecordingApplicationRepository();
-        var service = new RejectService(repo);
+        var eventBroker = new InMemoryEventBroker();
+        var service = new RejectService(repo, eventBroker);
 
         assertThrows(IllegalStateException.class, () -> {
             service.execute(new RejectCommand(APPLICATION_ID));
@@ -29,7 +31,8 @@ public class RejectServiceTest {
     void testMarksApplicationAsRejected() throws Exception {
         var existing = ApplicationFixtures.buildApplicationWithMotivationLetter(APPLICATION_ID);
         var repo = new RecordingApplicationRepository(existing);
-        var service = new RejectService(repo);
+        var eventBroker = new InMemoryEventBroker();
+        var service = new RejectService(repo, eventBroker);
 
         service.execute(new RejectCommand(APPLICATION_ID));
 

@@ -31,7 +31,7 @@ public final class JSONFileApplicationRepositoryTest {
 
     @Test
     void storesAndRetrievesApplicationWithBasicDetails() throws Exception {
-        Application application = ApplicationFixtures.buildEmptyApplication(APPLICATION_ID);
+        Application application = ApplicationFixtures.buildApplicationWithBasicDetails(APPLICATION_ID);
         JSONFileApplicationRepository repo1 = new JSONFileApplicationRepository(TEST_FILE);
 
         repo1.save(application);
@@ -42,7 +42,7 @@ public final class JSONFileApplicationRepositoryTest {
         assertEquals(APPLICATION_ID, result.getId().getValue());
         assertEquals(ApplicationFixtures.FIXED_DATE_TIME, result.getReceivedDateTime().getValue());
         assertEquals("Alex Example", result.getFullName().getValue());
-        assertEquals("+447700900123", result.getPhoneNumber().getValue());
+        assertEquals("447700900123", result.getPhoneNumber().getValue());
         assertEquals("alex@example.com", result.getEmailAddress().getValue());
     }
 
@@ -69,9 +69,9 @@ public final class JSONFileApplicationRepositoryTest {
         assertEquals(APPLICATION_ID, result.getId().getValue());
         assertEquals(ApplicationFixtures.FIXED_DATE_TIME, result.getReceivedDateTime().getValue());
         assertEquals("Alex Example", result.getFullName().getValue());
-        assertEquals("+447700900123", result.getPhoneNumber().getValue());
+        assertEquals("447700900123", result.getPhoneNumber().getValue());
         assertEquals("alex@example.com", result.getEmailAddress().getValue());
-        assertEquals("I am very motivated to join.", result.getMotivationLetter().getValue());
+        assertEquals("I am very motivated.", result.getMotivationLetter().getValue());
         assertEquals(ApplicationStages.THREE, result.getStage());
         assertEquals(ApplicationStatus.IN_PROGRESS, result.getStatus());
     }
@@ -90,7 +90,7 @@ public final class JSONFileApplicationRepositoryTest {
         assertEquals(APPLICATION_ID, result.getId().getValue());
         assertEquals(ApplicationFixtures.FIXED_DATE_TIME, result.getReceivedDateTime().getValue());
         assertEquals("Alex Example", result.getFullName().getValue());
-        assertEquals("+447700900123", result.getPhoneNumber().getValue());
+        assertEquals("447700900123", result.getPhoneNumber().getValue());
         assertEquals("alex@example.com", result.getEmailAddress().getValue());
         assertEquals("I am very motivated.", result.getMotivationLetter().getValue());
         assertEquals(ApplicationStages.TWO, result.getStage());

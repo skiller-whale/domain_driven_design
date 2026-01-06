@@ -1,13 +1,17 @@
-import type { ApplicationId } from "./ApplicationId";
-import type { ApplicationReceivedDateTime } from "./ApplicationReceivedDateTime";
+import type { DomainEvent } from "../DomainEvent";
+import { ApplicationId } from "./ApplicationId";
+import { ApplicationReceivedDateTime } from "./ApplicationReceivedDateTime";
+import { ApplicationRejectedEvent } from "./ApplicationRejectedEvent";
 import { ApplicationStage } from "./ApplicationStage";
 import { ApplicationStatus } from "./ApplicationStatus";
-import type { EmailAddress } from "./EmailAddress";
-import type { FullName } from "./FullName";
-import type { MotivationLetter } from "./MotivationLetter";
-import type { PhoneNumber } from "./PhoneNumber";
+import { EmailAddress } from "./EmailAddress";
+import { FullName } from "./FullName";
+import { MotivationLetter } from "./MotivationLetter";
+import { PhoneNumber } from "./PhoneNumber";
 
 export class Application {
+  private _events: DomainEvent[] = [];
+
   private _id: ApplicationId;
   private _stage: ApplicationStage = ApplicationStage.Zero;
   private _status: ApplicationStatus = ApplicationStatus.InProgress;
@@ -25,6 +29,26 @@ export class Application {
   get motivationLetter() { return this._motivationLetter; }
   get stage() { return this._stage; }
   get status() { return this._status; }
+
+  static reconstitute(fields: {
+    id: ApplicationId;
+    receivedDateTime: ApplicationReceivedDateTime;
+    fullName: FullName | undefined;
+    phoneNumber: PhoneNumber | undefined;
+    emailAddress: EmailAddress | undefined;
+    motivationLetter: MotivationLetter | undefined;
+    stage: ApplicationStage;
+    status: ApplicationStatus;
+  }) {
+    const app = new Application(fields.id, fields.receivedDateTime);
+    app._fullName = fields.fullName;
+    app._phoneNumber = fields.phoneNumber;
+    app._emailAddress = fields.emailAddress;
+    app._motivationLetter = fields.motivationLetter;
+    app._stage = fields.stage;
+    app._status = fields.status;
+    return app;
+  }
 
   constructor(id: ApplicationId, receivedDateTime: ApplicationReceivedDateTime) {
     if (!id || !receivedDateTime) {
@@ -63,10 +87,18 @@ export class Application {
 
   reject() {
     this._status = ApplicationStatus.Rejected;
+
+    this._events.push(new ApplicationRejectedEvent(this._id));
   }
 
   equals(other: Application) {
     return this._id.equals(other._id);
+  }
+
+  pullEvents() {
+    const events = this._events;
+    this._events = [];
+    return events;
   }
 
   private fields(): Record<string, any> {

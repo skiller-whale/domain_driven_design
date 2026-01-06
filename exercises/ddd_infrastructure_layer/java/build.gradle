@@ -23,14 +23,6 @@ testing {
 }
 
 tasks.named('test') {
-    useJUnitPlatform {
-        if (project.hasProperty('infrastructure')) {
-            includeTags 'infrastructure'
-        } else {
-            excludeTags 'infrastructure'
-        }
-    }
-
     testLogging {
         events "passed", "skipped", "failed"
         exceptionFormat = 'full'

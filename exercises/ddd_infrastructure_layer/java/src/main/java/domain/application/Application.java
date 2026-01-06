@@ -1,8 +1,12 @@
 package domain.application;
+import java.util.ArrayList;
+
+import domain.DomainEvent;
 import domain.application.stages.ApplicationStage;
 import domain.application.stages.ApplicationStages;
 
 public class Application {
+    private ArrayList<DomainEvent> events = new ArrayList<>();
     private ApplicationId id;
     private ApplicationStage stage = ApplicationStages.ZERO;
     private ApplicationStatus status = ApplicationStatus.IN_PROGRESS;
@@ -11,6 +15,26 @@ public class Application {
     private EmailAddress emailAddress;
     private PhoneNumber phoneNumber;
     private MotivationLetter motivationLetter;
+
+    public Application(
+        ApplicationId id,
+        ApplicationStage stage,
+        ApplicationStatus status,
+        ApplicationReceivedDateTime receivedDateTime,
+        FullName fullName,
+        EmailAddress emailAddress,
+        PhoneNumber phoneNumber,
+        MotivationLetter motivationLetter
+    ) {
+        this.id = id;
+        this.stage = stage;
+        this.status = status;
+        this.receivedDateTime = receivedDateTime;
+        this.fullName = fullName;
+        this.emailAddress = emailAddress;
+        this.phoneNumber = phoneNumber;
+        this.motivationLetter = motivationLetter;
+    }
 
     public Application(ApplicationId id, ApplicationReceivedDateTime receivedDateTime) {
         var fields = new ApplicationFields(id, stage, status, receivedDateTime, null, null, null, null);
@@ -87,11 +111,19 @@ public class Application {
 
     public void reject() {
         this.status = ApplicationStatus.REJECTED;
+
+        this.events.add(new ApplicationRejectedEvent(this.id) );
     }
 
 
     public boolean equals(Application other) {
         return this.id.equals(other.id);
+    }
+
+    public ArrayList<DomainEvent> pullEvents() {
+        var pulledEvents = new ArrayList<DomainEvent>(this.events);
+        this.events.clear();
+        return pulledEvents;
     }
 
     public record ApplicationFields(
